@@ -1,9 +1,9 @@
 import {RouterBuilder} from "astro-routify";
-import CatalogsRoutes from "../../routes/CatalogsRoutes.ts";
 import type {APIRoute} from "astro";
+import routesGroup from "../../routes/CatalogsRoutes.ts";
 
 const router = new RouterBuilder();
-router.register(CatalogsRoutes);
+router.addGroup(routesGroup)
 
 export const ALL: APIRoute = router.build();
 
