@@ -4,7 +4,7 @@ This project is a reference implementation of [astro-routify](https://github.com
 
 It showcases how to:
 
-- Organize your API endpoints semantically using `defineRoute` and `defineRouter`
+- Organize your API endpoints semantically using `defineGroup` and `RouterBuilder`
 - Avoid deeply nested folder structures while maintaining route clarity
 - Maintain full control over Astro's `APIContext` (cookies, sessions, headers, etc.)
 - Enable expressive route definitions with minimal boilerplate
@@ -13,47 +13,40 @@ It showcases how to:
 
 ## 📁 Route Definitions
 
-All routes are defined programmatically inside the `routes/` folder.  
+All routes are defined programmatically inside the `routes/` folder.
 This project uses a central file — `CatalogsRoutes.ts` — to group and export multiple endpoints in a clean and declarative way.
 
-Here’s a simplified example:
+Here’s a simplified example using the **group-based syntax**:
+
 
 ```ts
-import { defineHandler, defineRoute, HttpMethod, type Route, ok } from "astro-routify";
+// routes/CatalogsRoutes.ts
+import { defineGroup, ok } from "astro-routify";
 
-const EntryEndpoint: Route = defineRoute(
-  HttpMethod.GET,
-  '/',
-  defineHandler(async () => ok({ message: "This is the API :D" }))
-);
-
-const ParamEndpoint: Route = defineRoute(
-  HttpMethod.GET,
-  '/:param',
-  defineHandler(async ({ params }) => ok({ "the param is": params.param }))
-);
-
-const GendersEndpoint: Route = defineRoute(
-  HttpMethod.GET,
-  '/catalogs/genders',
-  defineHandler(async () =>
+export const CatalogsRoutes = defineGroup('/catalogs', (group) => {
+  group.addGet('/genders', () =>
     ok([
       { value: 'Male', label: 'Male' },
       { value: 'Female', label: 'Female' },
     ])
-  )
-);
+  );
 
-// ... other endpoints omitted for brevity
+  group.addGet('/countries', () =>
+    ok([
+      { value: 'MX', label: 'Mexico' },
+      { value: 'US', label: 'United States' },
+    ])
+  );
+});
 
-const CatalogsRoutes: Route[] = [
-  EntryEndpoint,
-  ParamEndpoint,
-  GendersEndpoint,
-  // ... other routes
-];
+// routes/BaseRoutes.ts
+import { defineGroup, ok } from "astro-routify";
 
-export default CatalogsRoutes;
+export const BaseRoutes = defineGroup('/', (group) => {
+    group.addGet('', () => ok({ message: "Welcome to the API :D" }));
+    group.addGet('/:param', ({ params }) => ok({ received: params.param }));
+});
+
 ```
 
 ---
@@ -69,12 +62,15 @@ All API routes are connected to Astro via a single dynamic entrypoint in:
 This file uses `RouterBuilder` from `astro-routify` to register and expose all defined routes:
 
 ```ts
-import { RouterBuilder } from "astro-routify";
-import CatalogsRoutes from "../../routes/CatalogsRoutes";
-import type { APIRoute } from "astro";
+import {RouterBuilder} from "astro-routify";
+import {BaseRoutes} from "../../routes/BaseRoutes";
+import {CatalogsRoutes} from "../../routes/CatalogsRoutes";
+import type {APIRoute} from "astro";
 
 const router = new RouterBuilder();
-router.register(CatalogsRoutes);
+
+router.addGroup(BaseRoutes);
+router.addGroup(CatalogsRoutes);
 
 export const ALL: APIRoute = router.build();
 ```
