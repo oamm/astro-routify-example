@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Clock Stream</title>
+    <style>
+        body { font-family: sans-serif; padding: 2rem; }
+        #log { white-space: pre-line; border-left: 4px solid #ccc; padding-left: 1rem; }
+    </style>
+</head>
+<body>
+<h1>Clock Stream via SSE</h1>
+<div id="log">Connecting...</div>
+
+<script>
+    const log = document.getElementById('log') as HTMLElement;
+    const events = new EventSource('/api/clock');
+
+    events.onmessage = (event) => {
+        log.textContent += `\n[${new Date().toLocaleTimeString()}] ${event.data}`;
+    };
+
+    events.onerror = (err) => {
+        log.textContent += `\n[error] Lost connection or server closed the stream.`;
+        events.close();
+    };
+</script>
+</body>
+</html>

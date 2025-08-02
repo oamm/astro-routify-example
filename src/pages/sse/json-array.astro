@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Array Stream</title>
+    <style>
+        body { font-family: sans-serif; padding: 2rem; }
+        #log { white-space: pre-line; border-left: 4px solid #ccc; padding-left: 1rem; }
+    </style>
+</head>
+<body>
+<h1>Array Stream</h1>
+<div id="log">Connecting...</div>
+
+<script type="module">
+    const log = document.getElementById('log');
+
+    const res = await fetch('/api/users');
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+    }
+
+    try {
+        const parsed = JSON.parse(buffer);
+        for (const item of parsed) {
+            log.textContent += `\n[${new Date().toLocaleTimeString()}] ${JSON.stringify(item)}`;
+        }
+    } catch (err) {
+        log.textContent += `\n[error] Failed to parse array: ${err.message}`;
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NDJSON Stream</title>
+    <style>
+        body { font-family: sans-serif; padding: 2rem; }
+        #log { white-space: pre-line; border-left: 4px solid #ccc; padding-left: 1rem; }
+    </style>
+</head>
+<body>
+<h1>NDJSON Stream</h1>
+<div id="log">Connecting...</div>
+
+<script type="module">
+    const log = document.getElementById('log');
+
+    const res = await fetch('/api/logs');
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        let newlineIndex;
+        while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
+            const line = buffer.slice(0, newlineIndex);
+            buffer = buffer.slice(newlineIndex + 1);
+            try {
+                const parsed = JSON.parse(line);
+                log.textContent += `\n[${new Date().toLocaleTimeString()}] ${JSON.stringify(parsed)}`;
+            } catch {
+                log.textContent += `\n[parse error] ${line}`;
+            }
+        }
+    }
+
+    log.textContent += `\nStream ended.`;
+</script>
+</body>
+</html>
